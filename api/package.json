@@ -1,0 +1,22 @@
+{
+  "name": "fgd-bot",
+  "version": "15.0.4",
+  "description": "fgd-bot using discord.js v14",
+  "main": "server.js",
+  "scripts": {
+    "start": "npx ts-node-dev --respawn --transpile-only server.ts",
+    "test": "npx tslint -c tslint.json '**/**/*.ts'",
+    "build": "tsc"
+  },
+  "author": "C.Graamans",
+  "license": "EUPL-1.1",
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "ts-node-dev": "^2.0.0",
+    "tslint": "^5.20.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "mysql2": "^3.14.1"
+  }
+}
