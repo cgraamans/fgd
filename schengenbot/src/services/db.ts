@@ -4,7 +4,7 @@ export class DB {
 
     private static instance:DB;
 
-    private Connection:mysql.Connection;
+    public connection:mysql.Connection;
 
     constructor() {
         this.Connect();
@@ -12,22 +12,16 @@ export class DB {
 
     private async Connect() {
         
-        this.Connection = await mysql.createConnection({
-            user:process.env.CORE_API_USER,
-            password:process.env.CORE_API_PASSWORD,
-            database:process.env.CORE_DB,
-            host:process.env.CORE_API_HOST,
+        this.connection = await mysql.createConnection({
+            user:process.env.EUROBOT_DB_USERNAME,
+            password:process.env.EUROBOT_DB_PASSWD,
+            database:"fgd",
+            host:"localhost",
             multipleStatements: true,
             charset:'utf8mb4',
         });
 
         console.log("Connected to database: " + process.env.CORE_DB);
-
-    }
-
-    public async query(sql:string,params:any[]) {
-
-        return await this.Connection.query(sql,params);
 
     }
 

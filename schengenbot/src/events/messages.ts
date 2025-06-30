@@ -3,6 +3,8 @@ import {Message,EmbedBuilder, TextChannel, ChannelType, BaseMessageOptions, Mess
 import db from "../services/db";
 import urlMetadata from "url-metadata";
 import { mkdirSync } from "fs";
+import { T } from "../../types/index";
+import { RowDataPacket, ResultSetHeader } from "mysql2";
 
 module.exports = {
 
@@ -47,35 +49,74 @@ module.exports = {
 		// 	return;
 		// }
 
-		if(message.content.includes('https://twitter.com')) return;
-		if(message.content.includes('https://bsky.app')) return;
-
+		// get the message_id if it already ex
+		let itemId:null|number = null;
 
 		// get messages with links
 		if (message.content.includes('http') || message.content.includes('https')) {
-			db.query("SELECT * FROM links WHERE url = ?", [message.content]).then(async (rows:any) => {
 
-				if (rows.length > 0) {
-					// link already exists
-					return;
-				} else {
-					// link does not exist, add it
-					// const metadata = await urlMetadata(message.content).catch((e:any) => {
-					// 	console.error("Error fetching metadata for URL:", e);
-					// 	return null;
-					// });
+			if(message.author === discord.Client.user) return;
+
+			// check if channel is in categories
+			const [categoryIds] = await db.connection.query<T.itemId[]>("SELECT id FROM i_categories WHERE channel_id = ?", [message.channel.id]);
+			if (categoryIds.length > 0) {
+			
+				const links = message.content.match(/\bhttps?:\/\/\S+/gi);
+				let uniqueLinks = [];
+
+				// Make unique links
+				for (const link of links) {
+
+					const [linkExists] = await db.connection.query<any[]>("SELECT url FROM i_links WHERE url = ?", [link])
+					if (linkExists.length < 1) {
+					
+						uniqueLinks.push(link);
+					
+					}
 
 				}
 
-			}).catch((error:any) => {
-				console.error("Error querying database for links:", error);
-			});
+				console.log(`Unique Links: ${uniqueLinks.length}`);
+
+				const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,user,category_id,dt) VALUES (?,?,?,?)", [
+					message.id,
+					message.author.username,
+					categoryIds[0].id,
+					Math.floor(new Date().getTime() / 1000)
+				]);
+				itemId = item.insertId;
+
+				for(const url of uniqueLinks) {
+
+					await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
+
+					// get metadata
+					const metadata = await urlMetadata(url).catch((err) => {
+						console.error(`Error fetching metadata for ${url}:`, err);
+						return null;
+					});
+					console.log(`Metadata for ${url}:`, metadata);
+				}
+
+			}
+		
 		}
 
 		//get messages with images
-		if (message.attachments.size > 0) {	
-			
-		
+		if (message.attachments.size > 0) {
+
+			// check if channel is in categories
+			const [categoryIds] = await db.connection.query<T.itemId[]>("SELECT id FROM i_categories WHERE channel_id = ?", [message.channel.id]);
+			if (categoryIds.length > 0) {
+
+				if(!itemId) {
+
+
+
+				}
+				
+			}
+
 		}
 		
 		//

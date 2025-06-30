@@ -16,7 +16,7 @@ class Discord {
 
     private Roles:string[] = [];
 
-    private key:string = process.env.FGDBOT_DISCORD_KEY || "";
+    private key:string = process.env.FGD_SCHENGENBOT_DISCORD_KEY || "";
 
     // Service Instance Initialization
     static getInstance() {

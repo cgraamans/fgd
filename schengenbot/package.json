@@ -1,6 +1,6 @@
 {
   "name": "schengenbot",
-  "version": "15.0.4",
+  "version": "1.0.1",
   "description": "schengenbot using discord.js v14",
   "main": "schengenbot.js",
   "scripts": {
