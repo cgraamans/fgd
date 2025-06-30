@@ -1,6 +1,6 @@
 // import DB from "./db";
 // import {Eurobot} from "../../types/index";
-import {IntentsBitField, Partials, Message, User, Client, Guild, GuildMember, Role, MessageReaction} from "discord.js";
+import {IntentsBitField, Partials, Message, User, Client, Guild, GuildMember, Role, MessageReaction, ActivityType} from "discord.js";
 import * as fs from "fs";
 // import * as Conf from "../../conf/discord.json";
 
@@ -81,7 +81,22 @@ class Discord {
             });
 
             // login
-            this.Client.login(this.key);
+            this.Client.login(this.key).then(() => {
+                console.log("SchengenBot Logged In");
+
+                // // set presence
+                // this.Client.user?.setPresence({
+                //     activities: [{
+                //         name: 'Helmut Kohl',
+                //         type: ActivityType.Watching
+                //     }],
+                //     status: 'online'
+
+                // });
+
+            }).catch((e) => {
+                console.error("!! Discord Service Client Login Error", e);
+            });
 
         } catch(e) {
 

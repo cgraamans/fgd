@@ -91,7 +91,7 @@ module.exports = {
 					await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
 
 					// get metadata
-					const metadata = await urlMetadata(url).catch((err) => {
+					const metadata = await urlMetadata(url).catch((err:any) => {
 						console.error(`Error fetching metadata for ${url}:`, err);
 						return null;
 					});
