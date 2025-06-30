@@ -38,16 +38,8 @@ module.exports = {
 	//
 	async execute(message:Message) {
 
-
-		// ignore bot messages
-		// if (message.author.bot) return;
-
+		// only messages in guilds
 		if (!message.guild) return;
-
-		// // whitelist channels
-		// if (discord.config.whitelistChannels && !discord.config.whitelistChannels.includes(message.channel.id)) {
-		// 	return;
-		// }
 
 		// get the message_id if it already ex
 		let itemId:null|number = null;
@@ -61,12 +53,42 @@ module.exports = {
 			const [categoryIds] = await db.connection.query<T.itemId[]>("SELECT id FROM i_categories WHERE channel_id = ?", [message.channel.id]);
 			if (categoryIds.length > 0) {
 			
+				// get all links in the message
 				const links = message.content.match(/\bhttps?:\/\/\S+/gi);
 				let uniqueLinks = [];
 
 				// Make unique links
-				for (const link of links) {
+				for (let link of links) {
 
+					// remove archive.ph ending if it's a )
+					if( link.includes("archive.ph") && link.endsWith(')')) {
+						link = link.substring(0, link.length - 1);
+					}
+
+					//
+					// remove custom discord redirect links
+					//
+					if(link.includes("fxtwitter.com")) {
+						link = link.replace(/(fxtwitter\.com)/gm,"x.com");
+					}
+
+					if(link.includes("vxtwitter.com")) {
+						link = link.replace(/(vxtwitter\.com)/gm,"x.com");
+					}
+
+					if(link.includes("xbsky.app")) {
+						link = link.replace(/(https:\/\/xbsky\.app)/gm,"https://bsky.app");
+					}
+
+					if(link.includes("ddinstagram.com")) {
+						link = link.replace(/(ddinstagram\.com)/gm,"instagram.com");
+					}
+
+					if(link.includes("rxddit.com")) {
+						link = link.replace(/(rxddit\.com)/gm,"reddit.com");
+					}
+
+					// check if link already exists in the database
 					const [linkExists] = await db.connection.query<any[]>("SELECT url FROM i_links WHERE url = ?", [link])
 					if (linkExists.length < 1) {
 					
@@ -76,16 +98,41 @@ module.exports = {
 
 				}
 
-				console.log(`Unique Links: ${uniqueLinks.length}`);
+				// if is a reply, get the parent item id
+				let replyTo:null|number = null;
+				if(message.type === MessageType.Reply) {
+				
+					const parentMsg = await message.fetchReference();
+					if(parentMsg.id) {
+						
+						const [parentItem] = await db.connection.query<T.itemId[]>("SELECT id FROM items WHERE message_id = ?", [parentMsg.id]);
+						if(parentItem.length > 0) {
+							replyTo = parentItem[0].id;
+						}
+					}
+				
+				}
 
-				const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,user,category_id,dt) VALUES (?,?,?,?)", [
+				// if the message author is a bot, check if it mentions users and use that
+				let author = message.author.username;
+				if(message.author.bot && message.mentions.users.size > 0) {
+				
+					// if the message is from a bot and mentions users, use the first mentioned user as author
+					author = message.mentions.users.first().username;
+
+				}
+
+				// insert item
+				const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,reply_to,user,category_id,dt) VALUES (?,?,?,?,?)", [
 					message.id,
-					message.author.username,
+					replyTo,
+					author,
 					categoryIds[0].id,
 					Math.floor(new Date().getTime() / 1000)
 				]);
 				itemId = item.insertId;
 
+				// insert links into the database
 				for(const url of uniqueLinks) {
 
 					await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
@@ -96,6 +143,7 @@ module.exports = {
 						return null;
 					});
 					console.log(`Metadata for ${url}:`, metadata);
+
 				}
 
 			}
