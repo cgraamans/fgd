@@ -1,27 +1,25 @@
 {
     "compilerOptions": {
-        "module": "esnext",
+        "module": "commonjs",
         "esModuleInterop": true,
-        "target": "esnext",
+        "target": "es6",
         "noImplicitAny": true,
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "sourceMap": true,
-        "outDir": "dist",
+        "skipLibCheck":true,
+        "outDir": "Z:/www/fgd/schengenbot/dist",
         "baseUrl": ".",
-        "lib": [
-             "es5", "es6", "dom", "dom.iterable"
-         ],     
         "paths": {
             "*": [
                 "node_modules/",
                 "types/*"
             ]
-        }
+        },
+        "types":["node"]
     },
     "include": [
-        "src/**/*",
-         "tests/**/*"
-     ]
- }
- 
+        "src/**/*.ts",
+        "*.ts",
+    ]
+}

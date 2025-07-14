@@ -62,7 +62,12 @@ module.exports = {
 
 					// remove archive.ph ending if it's a )
 					if( link.includes("archive.ph") && link.endsWith(')')) {
-						link = link.substring(0, link.length - 1);
+						link = link.slice(0, -1);
+					}
+
+					// remove embedded urls ending if it's a >)
+					if(link.endsWith('>)')) {
+						link = link.slice(0, -2);
 					}
 
 					//
@@ -123,12 +128,13 @@ module.exports = {
 				}
 
 				// insert item
-				const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,reply_to,user,category_id,dt) VALUES (?,?,?,?,?)", [
+				const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,reply_to,user,category_id,dt,content) VALUES (?,?,?,?,?,?)", [
 					message.id,
 					replyTo,
 					author,
 					categoryIds[0].id,
-					Math.floor(new Date().getTime() / 1000)
+					Math.floor(new Date().getTime() / 1000),
+					message.content
 				]);
 				itemId = item.insertId;
 
@@ -137,12 +143,22 @@ module.exports = {
 
 					await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
 
-					// get metadata
-					const metadata = await urlMetadata(url).catch((err:any) => {
-						console.error(`Error fetching metadata for ${url}:`, err);
-						return null;
-					});
-					console.log(`Metadata for ${url}:`, metadata);
+					// if the url is not an image, get metadata
+					if(!url.endsWith(".png") 
+						|| !url.endsWith(".jpg") 
+						|| !url.endsWith(".jpeg") 
+						|| !url.endsWith(".gif") 
+						|| !url.endsWith(".webp") 
+						|| !url.endsWith(".svg")) {
+
+						// get metadata
+						const metadata = await urlMetadata(url).catch((err) => {
+							console.error(`Error fetching metadata for ${url}:`, err);
+							return null;
+						});
+						console.log(`Metadata for ${url}:`, metadata);
+
+					}
 
 				}
 
@@ -178,7 +194,7 @@ module.exports = {
 		// https:\/\/(www\.)?((twitter)|(x))(\.com)\/\w*\/status\/[0-9]*
 		if(message.content.match(/https:\/\/(www\.)?((twitter)|(x))(\.com)\/\w*\/status\/[0-9]*/gm)) {
 
-			const cleaned = message.content.replace(/(twitter|x)(\.com)/gm,"fxtwitter.com");
+			const cleaned = message.content.replace(/(twitter|x)(\.com)/gm,"vxtwitter.com");
 
 			const payload = {
 				content:`By ${message.author.toString()} in ${message.channel.toString()}\n${cleaned}`,
