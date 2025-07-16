@@ -23,6 +23,13 @@ export namespace T {
     
     }
 
+    export interface ItemLink extends RowDataPacket {
+
+        item_id: number;
+        url: string
+    
+    }
+
     export interface getItemOptions {
     
         id?: number;
@@ -30,7 +37,8 @@ export namespace T {
         user?:string;
         category?:number;
         limit:number;
-    
+        dir?: 'asc' | 'desc';
+
     }
 
 }

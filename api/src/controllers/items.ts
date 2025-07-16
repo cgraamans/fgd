@@ -9,21 +9,25 @@ import { getItemList } from '../models/items';
  */
 
 // Read all items
-export const getItems = (req: Request, res: Response, next: NextFunction) => {
+export const getItems = async (req: Request, res: Response, next: NextFunction) => {
 
   try {
+
+    console.log('Fetching items with options:', req.params.options);
 
     // If no options are provided, default to an empty object with a limit of 10
     if(!req.params.options) {
       req.params.options = JSON.stringify({limit: 10});
     }
 
-    // Ensure options is an object
-    if(typeof req.params.options !== 'object' || Array.isArray(req.params.options)) {
-      throw new Error('Invalid options format. Expected an object.');
-    }
+    // // Ensure options is an object
+    // if(typeof req.params.options !== 'object' || Array.isArray(req.params.options)) {
+    //   throw new Error('Invalid options format. Expected an object.');
+    // }
 
     let options = JSON.parse(req.params.options);
+
+    console.log('Parsed options:', options);
 
     // Limit to a maximum of 100 items to prevent overload
     if(options.limit && options.limit > 100) {
@@ -48,8 +52,12 @@ export const getItems = (req: Request, res: Response, next: NextFunction) => {
       throw new Error('Invalid category format. Expected a number.');
     }
 
+    const items = await getItemList(options);
+
+    console.log('Items fetched:', items);
+
     // Fetch the item list based on the provided options
-    res.json(getItemList(options));
+    res.status(200).json(items);
 
   } catch (error) {
     

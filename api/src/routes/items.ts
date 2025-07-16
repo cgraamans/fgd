@@ -7,9 +7,7 @@ import {
 
 const router = Router();
 
-router.get('/items/', getItems);
-router.get('/items/:options', getItems);
+router.get('/', getItems);
+router.get('/:options', getItems);
 
 export default router;
-
-module.exports = router;

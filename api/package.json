@@ -1,7 +1,7 @@
 {
-  "name": "fgd-bot",
-  "version": "15.0.4",
-  "description": "fgd-bot using discord.js v14",
+  "name": "fgd-api",
+  "version": "1.0.4",
+  "description": "fgd-api using express",
   "main": "server.js",
   "scripts": {
     "start": "npx ts-node-dev --respawn --transpile-only server.ts",

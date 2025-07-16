@@ -15,12 +15,16 @@ const httpServer = createServer(app);
 app.use(express.json());
 app.use(helmet());
 
+
 // Routes
-app.use('/items', itemRoutes);
+app.use('/items/', itemRoutes);
 
 // Routes
 app.use('/register', itemRoutes);
 
+app.use('/', (req, res) => {
+  res.send(JSON.stringify({message:'Welcome to the API'})); 
+});
 // Global error handler (should be after routes)
 // app.use(errorHandler);
 
