@@ -41,7 +41,6 @@ module.exports = {
 		// only messages in guilds
 		if (!message.guild) return;
 
-		// get the message_id if it already ex
 		let itemId:null|number = null;
 
 		// get messages with links
@@ -54,21 +53,11 @@ module.exports = {
 			if (categoryIds.length > 0) {
 			
 				// get all links in the message
-				const links = message.content.match(/\bhttps?:\/\/\S+/gi);
+				const links = message.content.match(/https?:\/\/(www.)?[a-zA-Z]+(\.[a-zA-Z]+)+(\/(\w|[-_%.#?=&+])+)+/g);
 				let uniqueLinks = [];
 
 				// Make unique links
 				for (let link of links) {
-
-					// remove archive.ph ending if it's a )
-					if( link.includes("archive.ph") && link.endsWith(')')) {
-						link = link.slice(0, -1);
-					}
-
-					// remove embedded urls ending if it's a >)
-					if(link.endsWith('>)')) {
-						link = link.slice(0, -2);
-					}
 
 					//
 					// remove custom discord redirect links
@@ -141,7 +130,8 @@ module.exports = {
 				// insert links into the database
 				for(const url of uniqueLinks) {
 
-					await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
+					const [link] = await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
+					const linkId = link.insertId;
 
 					// if the url is not an image, get metadata
 					if(!url.endsWith(".png") 
@@ -152,12 +142,29 @@ module.exports = {
 						|| !url.endsWith(".svg")) {
 
 						// get metadata
-						const metadata = await urlMetadata(url).catch((err) => {
+						const metadata = await urlMetadata(url).catch((err:any) => {
 							console.error(`Error fetching metadata for ${url}:`, err);
 							return null;
 						});
-						console.log(`Metadata for ${url}:`, metadata);
+						if(!metadata) return;
 
+						let image = metadata["og:image"] || metadata["twitter:image"] || metadata["image"];
+						let title = metadata["og:title"] || metadata["twitter:title"] || metadata["title"];
+						let description = metadata["og:description"] || metadata["twitter:description"] || metadata["description"];
+						let video = metadata["og:video"] || metadata["twitter:player"] || metadata["video"];
+						if(url.includes("tenor.com")){
+							video = metadata["og:video:secure_url"] || metadata["twitter:player:secure_url"];
+						}
+
+						const [media] = await db.connection.query<ResultSetHeader>("INSERT INTO i_metadata (link_id,title,description,image,video) VALUES (?,?,?,?,?)", [
+							linkId,
+							title || null,
+							description || null,
+							image || null,
+							video || null
+						]);
+
+						console.log(`Inserted metadata for link ${url}`,metadata,`\n\n`);
 					}
 
 				}
