@@ -34,22 +34,32 @@ export const getItemList = async (options:T.getItemOptions = {limit:10,dir:"desc
   }
 
   if(options.category) {
-    sql = `SELECT * FROM items WHERE category = ? ORDER BY ${dir} ? LIMIT ?`;
+    sql = `SELECT * FROM items WHERE category_id = ? ORDER BY ${dir} ? LIMIT ?`;
     params = [options.category, options.limit];
   }
 
   // Default case: return all items with a limit
   let [results] = await db.connection.query<T.Item[]>(sql, params);
 
-  let i = 0;
   for(const item of results) {
+
+    const [category] = await db.connection.query<T.ItemCategory[]>('SELECT * FROM i_categories WHERE id = ?', [item.category_id]);
+    if(category.length > 0) {
+      item.category = category[0];
+    }
+
     const [itemLinks] = await db.connection.query<T.ItemLink[]>('SELECT * FROM i_links WHERE item_id = ?', [item.id]);
-    results[i].urls = itemLinks.map(link => link.url);
-    console.log(`Item ${item.id} links:`, results[i].urls);
-    i++;
+    for(const link of itemLinks) {
+      const [metadata] = await db.connection.query<T.ItemMetadata[]>('SELECT * FROM i_metadata WHERE link_id = ?', [link.id]);
+      if(metadata.length > 0) { 
+        link.metadata = metadata[0];
+      }
+    }
+    item.links = itemLinks;
+
   }
 
-  console.log(`Fetched ${results.length} items with options:`, options);
+  // console.log(results);
 
   return results;
 

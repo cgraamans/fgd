@@ -10,7 +10,13 @@ module.exports = {
 
 	name: 'messageCreate',
 
-	async replaceMessageLink(message:Message,payload:MessageCreateOptions|MessageReplyOptions) {
+	/**
+	 * Handle replacfement of messages on Discord.
+	 * @param {Message} message - The message that is to be replaced.
+	 * @return {Promise<void>}
+	 * @description This function replaces Discord messages with bot generated messages.
+	 */
+	async replaceMessageLink(message:Message,payload:MessageCreateOptions|MessageReplyOptions): Promise<void> {
 
 		if(!message.guild) return;
 		if(!message.channel) return;
@@ -33,7 +39,61 @@ module.exports = {
 
 	},
 
+	/**
+	 * Get metadata for a link and insert it into the database.
+	 * @param linkId - The ID of the link in the database.
+	 * @param url - The URL to fetch metadata from.
+	 * @returns A promise that resolves to the metadata object or null if an error occurs.
+	 */
+	async getMetaData(linkId:number,url:string):Promise<urlMetadata.Result|null> {
+
+		try {
+
+			// get metadata
+			const metadata:urlMetadata.Result|null = await urlMetadata(url).catch((err: any) => {
+				console.error(`Error fetching metadata for ${url}:`, err);
+				return null;
+			});
+			if(metadata) {
+
+				let image = metadata["og:image"] || metadata["twitter:image"] || metadata["image"];
+				let title = metadata["og:title"] || metadata["twitter:title"] || metadata["title"];
+				let description = metadata["og:description"] || metadata["twitter:description"] || metadata["description"];
+				let video = metadata["og:video"] || metadata["twitter:player"] || metadata["video"];
+				if(url.includes("tenor.com")){
+					video = metadata["og:video:secure_url"] || metadata["twitter:player:secure_url"];
+				}
+
+				const [media] = await db.connection.query<ResultSetHeader>("INSERT INTO i_metadata (link_id,title,,image,video) VALUES (?,?,?,?,?)", [
+					linkId,
+					title || null,
+					description || null,
+					image || null,
+					video || null
+				]);
+
+				console.log(`Inserted metadata for link ${url}`,metadata,`\n\n`);
+
+			}
+
+			return metadata;
+
+		} catch (error) {
+			console.error(`Error fetching metadata for ${url}:`, error);
+			return null;
+		}
+	},
+
+	// async getTags():Promise<T.itemId[]> {
+
+    //         // SELECT id, tag, countryId, cityId, capitalId, orgId, pplId
+    //         // FROM tags
+    //         // WHERE BINARY ? LIKE CONCAT('%', tag, '%')
+    //         // ORDER by LENGTH(tag) DESC;
+
+	// },
 	//
+
 	// Main Execution Function
 	//
 	async execute(message:Message) {
@@ -91,80 +151,61 @@ module.exports = {
 					}
 
 				}
+				if(uniqueLinks.length > 0) {
 
-				// if is a reply, get the parent item id
-				let replyTo:null|number = null;
-				if(message.type === MessageType.Reply) {
-				
-					const parentMsg = await message.fetchReference();
-					if(parentMsg.id) {
-						
-						const [parentItem] = await db.connection.query<T.itemId[]>("SELECT id FROM items WHERE message_id = ?", [parentMsg.id]);
-						if(parentItem.length > 0) {
-							replyTo = parentItem[0].id;
+					// if is a reply, get the parent item id
+					let replyTo:null|number = null;
+					if(message.type === MessageType.Reply) {
+					
+						const parentMsg = await message.fetchReference();
+						if(parentMsg.id) {
+							
+							const [parentItem] = await db.connection.query<T.itemId[]>("SELECT id FROM items WHERE message_id = ?", [parentMsg.id]);
+							if(parentItem.length > 0) {
+								replyTo = parentItem[0].id;
+							}
 						}
+					
 					}
-				
-				}
 
-				// if the message author is a bot, check if it mentions users and use that
-				let author = message.author.username;
-				if(message.author.bot && message.mentions.users.size > 0) {
-				
-					// if the message is from a bot and mentions users, use the first mentioned user as author
-					author = message.mentions.users.first().username;
+					// if the message author is a bot, check if it mentions users and use that
+					let author = message.author.username;
+					if(message.author.bot && message.mentions.users.size > 0) {
+					
+						// if the message is from a bot and mentions users, use the first mentioned user as author
+						author = message.mentions.users.first().username;
 
-				}
+					}
 
-				// insert item
-				const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,reply_to,user,category_id,dt,content) VALUES (?,?,?,?,?,?)", [
-					message.id,
-					replyTo,
-					author,
-					categoryIds[0].id,
-					Math.floor(new Date().getTime() / 1000),
-					message.content
-				]);
-				itemId = item.insertId;
+					// insert item
+					const [item] = await db.connection.query<ResultSetHeader>("INSERT INTO items (message_id,reply_to,user,category_id,dt,content) VALUES (?,?,?,?,?,?)", [
+						message.id,
+						replyTo,
+						author,
+						categoryIds[0].id,
+						Math.floor(new Date().getTime() / 1000),
+						message.content
+					]);
+					itemId = item.insertId;
 
-				// insert links into the database
-				for(const url of uniqueLinks) {
+					// insert links into the database
+					for(const url of uniqueLinks) {
 
-					const [link] = await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
-					const linkId = link.insertId;
+						const [link] = await db.connection.query<ResultSetHeader>("INSERT INTO i_links (url,item_id) VALUES (?,?)", [url,itemId]);
+						const linkId = link.insertId;
 
-					// if the url is not an image, get metadata
-					if(!url.endsWith(".png") 
-						|| !url.endsWith(".jpg") 
-						|| !url.endsWith(".jpeg") 
-						|| !url.endsWith(".gif") 
-						|| !url.endsWith(".webp") 
-						|| !url.endsWith(".svg")) {
+						// if the url is not an image, get metadata
+						if(!url.endsWith(".png") 
+							|| !url.endsWith(".jpg") 
+							|| !url.endsWith(".jpeg") 
+							|| !url.endsWith(".gif") 
+							|| !url.endsWith(".webp") 
+							|| !url.endsWith(".svg")) {
 
-						// get metadata
-						const metadata = await urlMetadata(url).catch((err:any) => {
-							console.error(`Error fetching metadata for ${url}:`, err);
-							return null;
-						});
-						if(!metadata) return;
+							const metadata = await this.getMetaData(linkId,url);
 
-						let image = metadata["og:image"] || metadata["twitter:image"] || metadata["image"];
-						let title = metadata["og:title"] || metadata["twitter:title"] || metadata["title"];
-						let description = metadata["og:description"] || metadata["twitter:description"] || metadata["description"];
-						let video = metadata["og:video"] || metadata["twitter:player"] || metadata["video"];
-						if(url.includes("tenor.com")){
-							video = metadata["og:video:secure_url"] || metadata["twitter:player:secure_url"];
 						}
 
-						const [media] = await db.connection.query<ResultSetHeader>("INSERT INTO i_metadata (link_id,title,description,image,video) VALUES (?,?,?,?,?)", [
-							linkId,
-							title || null,
-							description || null,
-							image || null,
-							video || null
-						]);
-
-						console.log(`Inserted metadata for link ${url}`,metadata,`\n\n`);
 					}
 
 				}

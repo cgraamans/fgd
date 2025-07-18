@@ -29,17 +29,7 @@ export const getItems = async (req: Request, res: Response, next: NextFunction) 
 
     console.log('Parsed options:', options);
 
-    // Limit to a maximum of 100 items to prevent overload
-    if(options.limit && options.limit > 100) {
-      options.limit = 100; 
-    }
-
-    // Ensure 'from' is not negative
-    if(options.from && options.from < 0) {
-      options.from = 0; 
-    }
-
-    
+    // Validate options 
     if(options.id && typeof options.id !== 'number') {
       throw new Error('Invalid id format. Expected a number.');
     }
@@ -50,6 +40,17 @@ export const getItems = async (req: Request, res: Response, next: NextFunction) 
   
     if(options.category && typeof options.category !== 'number') {
       throw new Error('Invalid category format. Expected a number.');
+    }
+
+      // Validate options
+    if(!options.limit || options.limit < 1) {
+      options.limit = 10; // Default limit
+    }
+    if(options.limit > 100) {
+      options.limit = 100; // Cap limit to prevent overload
+    }
+    if(options.from && options.from < 0) {
+      options.from = 0; // Ensure 'from' is not negative
     }
 
     const items = await getItemList(options);
