@@ -1,7 +1,5 @@
 import { Router } from 'express';
-import {
-  getItems,
-} from '../controllers/items';
+import { getItems } from '../controllers/items';
 
 // Create a new router instance 
 
