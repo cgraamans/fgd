@@ -168,9 +168,9 @@ module.exports = {
 							link = link.replace(/(vxtwitter\.com)/gm,"x.com");
 						}
 
-						if(link.includes("xbsky.app")) {
-							link = link.replace(/(https:\/\/xbsky\.app)/gm,"https://bsky.app");
-						}
+						// if(link.includes("xbsky.app")) {
+						// 	link = link.replace(/(https:\/\/xbsky\.app)/gm,"https://bsky.app");
+						// }
 
 						if(link.includes("kknstagram.com")) {
 							link = link.replace(/(kkinstagram\.com)/gm,"instagram.com");
@@ -290,7 +290,7 @@ module.exports = {
 			// https:\/\/(www\.)?((twitter)|(x))(\.com)\/\w*\/status\/[0-9]*
 			if(message.content.match(/https:\/\/(www\.)?((twitter)|(x))(\.com)\/\w*\/status\/[0-9]*/gm)) {
 
-				const cleaned = message.content.replace(/(twitter|x)(\.com)/gm,"vxtwitter.com");
+				const cleaned = message.content.replace(/(twitter|x)(\.com)/gm,"fxtwitter.com");
 
 				const payload = {
 					content:`By ${message.author.toString()} in ${message.channel.toString()}\n${cleaned}`,
@@ -307,7 +307,7 @@ module.exports = {
 			// Reddit Replace
 			if(message.content.includes('https://reddit.com') || message.content.includes('https://www.reddit.com')) {
 			
-				const cleaned = message.content.replace(/(reddit\.com)/gm,"rxddit.com");
+				const cleaned = message.content.replace(/(reddit\.com)/gm,"redditez.com");
 			
 				const payload = {
 					content:`By ${message.author.toString()} in ${message.channel.toString()}\n${cleaned}`,
@@ -338,18 +338,18 @@ module.exports = {
 
 			//
 			// Bluesky Replace
-			if(message.content.includes('https://bsky.app')) {
+			// if(message.content.includes('https://bsky.app')) {
 
-				const cleaned = message.content.replace(/(https\:\/\/bsky\.app)/gm,"https://xbsky.app");
-				const payload = {
-					content:`By ${message.author.toString()} in ${message.channel.toString()}\n${cleaned}`,
-					flags:[4096]
-				};
+			// 	const cleaned = message.content.replace(/(https\:\/\/bsky\.app)/gm,"https://xbsky.app");
+			// 	const payload = {
+			// 		content:`By ${message.author.toString()} in ${message.channel.toString()}\n${cleaned}`,
+			// 		flags:[4096]
+			// 	};
 
-				await this.replaceMessageLink(message,payload);
+			// 	await this.replaceMessageLink(message,payload);
 
-				return;
-			}
+			// 	return;
+			// }
 
 			//
 			// Spotify Replace
