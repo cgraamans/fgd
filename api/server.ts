@@ -1,6 +1,6 @@
 import express from 'express';
 import itemRoutes from './src/routes/items';
-import { errorHandler } from './src/middleware/errors';
+// import { errorHandler } from './src/middleware/errors';
 import helmet from 'helmet';
 import { createServer } from 'http';
 import DB from './src/services/db';

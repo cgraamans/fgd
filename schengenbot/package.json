@@ -12,6 +12,7 @@
   "license": "EUPL-1.1",
   "devDependencies": {
     "@eslint/js": "^9.30.0",
+    "@types/snoowrap": "^1.16.1",
     "ts-node-dev": "^2.0.0",
     "tslint": "^5.20.1",
     "typescript": "^5.8.3"
@@ -19,6 +20,7 @@
   "dependencies": {
     "discord.js": "^14.21.0",
     "mysql2": "^3.14.1",
+    "snoowrap": "^1.23.0",
     "url-metadata": "^5.2.1"
   }
 }

@@ -1,19 +1,19 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "nodenext",
         "esModuleInterop": true,
         "target": "es6",
-        "noImplicitAny": true,
-        "moduleResolution": "node",
+        "noImplicitAny": false,
+        "strictNullChecks": false,
+        "moduleResolution": "nodenext",
         "resolveJsonModule": true,
         "sourceMap": true,
         "skipLibCheck":true,
         "outDir": "Z:/www/fgd/schengenbot/dist",
-        "baseUrl": ".",
         "paths": {
             "*": [
-                "node_modules/",
-                "types/*"
+                "./node_modules/",
+                "./types/*"
             ]
         },
         "types":["node"]

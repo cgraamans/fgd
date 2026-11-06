@@ -1,7 +1,28 @@
 import { RowDataPacket } from 'mysql2';
+import { Express } from 'express';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user: T.User
+    }
+  }
+}
 
 export namespace T {
+
+    export interface User extends RowDataPacket {
+        id: number;
+        username: string;
+        password: string;
+        roles?: Role[];
+    }
     
+    export interface Role extends RowDataPacket {
+        id: number;
+        name: string;
+    }
+
     export interface Item extends RowDataPacket {
 
         id: number;

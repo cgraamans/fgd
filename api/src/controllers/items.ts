@@ -60,6 +60,8 @@ export const getItems = async (req: Request, res: Response, next: NextFunction) 
     // Fetch the item list based on the provided options
     res.status(200).json(items);
 
+    next();
+
   } catch (error) {
     
     next(error);
